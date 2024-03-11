@@ -5,6 +5,9 @@
 // 4: Spin the slot machine.
 // 5: Check if the user won.
 // 6: If won, give the user their winnings.
+
+const PromptSync = require('prompt-sync');
+
 // 7: Play again or not depending on the amount of money the user has left.
 const prompt = require('prompt-sync')();
 
@@ -92,9 +95,83 @@ const spin = () => {
   return reels;
 };
 
-const reels = spin();
-console.log(reels);
+const transpose = (reels) => {
+  const rows = [];
+  for(let i = 0; i < ROWS; i++){
+    rows.push([]);
+    for(let j = 0; j < COLS; j++){
+      rows[i].push(reels[j][i]);
+    }
+  }
+  return rows;
+};
 
-let balance = depsoit();
-const numberOfLines = getNumberOfLines();
-const bet = getBet(balance, numberOfLines);
+const printRows = (transposedMatrix) =>{
+  for(const row of transposedMatrix){
+    let rowString = "";
+    for(const[i, symbol] of row.entries()){
+      rowString += symbol;
+      if(i != row.length - 1){
+        rowString += " | "
+      }
+    }
+    console.log(rowString);
+  }
+};
+
+const getWinnings = (bet, lines, transposedMatrix) => {
+  let winnings = 0;
+  for(let row = 0; row < lines; row++){
+    const symbols = transposedMatrix[row];
+    let allSame = true;
+
+    for(const symbol of symbols){
+      if(symbol != symbols[0]){
+        allSame = false;
+        break;
+      }
+    }
+    if(allSame){
+      winnings += bet * SYMBOLS_VALUES[symbols[0]];
+    }
+  }
+  return winnings;
+};
+
+const game = () => {
+  let balance = depsoit();
+  
+  while(true){
+    console.log(`You have net balance of ${balance}`)
+    const lines = getNumberOfLines();
+    const bet = getBet(balance, lines);
+    balance -= bet*lines;
+    const reels = spin();
+    console.log(reels);
+
+    const transposedMatrix = transpose(reels);
+    console.log(transposedMatrix);
+
+    printRows(transposedMatrix);
+
+    const winnings = getWinnings(bet, lines, transposedMatrix);
+    balance += winnings;
+    console.log(`You won, ${winnings}`);
+
+    if(balance <= 0){
+      console.log(`You ran out of money.`);
+      break;
+    }
+
+    const playAgain = prompt("Do you want to play again (y/n)?");
+    if(playAgain != "y") break;
+  }
+}
+
+game();
+
+
+
+
+
+
